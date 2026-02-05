@@ -1,4 +1,5 @@
 ## Feature-based statistical analysis of shape graph data
+<img width="1227" height="311" alt="pipeline" src="https://github.com/user-attachments/assets/50e862db-8db4-4c4a-920b-1cd956c6192f" />
 
 
 
