@@ -1,4 +1,5 @@
 ## Feature-based statistical analysis of shape graph data
+<img width="1227" height="311" alt="pipeline" src="https://github.com/user-attachments/assets/50e862db-8db4-4c4a-920b-1cd956c6192f" />
 
 
 
@@ -20,7 +21,7 @@ If you use this code or methodology in your research, please cite:
 
 ### Key Capabilities
 
-- **Multi-Domain Feature Extraction**: Extract 19 comprehensive features from 3D neuron morphologies, 2D astrocyte networks, and urban road networks
+- **Feature Extraction**: Extract 19 comprehensive features from 3D neuron morphologies, 2D astrocyte networks, and urban road networks
 - **Statistical Comparison**: Perform group-level statistical analysis across different network categories
 - **Clustering Analysis**: Compare networks using both feature-based methods and Gromov-Wasserstein Distance (G-W) with t-SNE visualization
 - **Classification**: Distinguish network types using Random Forest classifiers
