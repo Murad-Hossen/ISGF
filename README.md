@@ -17,7 +17,10 @@ If you use this code or methodology in your research, please cite:
 
 ```
 
-Source code link: `https://github.com/Murad-Hossen/ISGF.git`
+Source code link:
+```
+https://github.com/Murad-Hossen/ISGF.git
+```
 
 ### Key Capabilities
 
