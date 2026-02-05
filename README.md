@@ -21,7 +21,7 @@ If you use this code or methodology in your research, please cite:
 
 ### Key Capabilities
 
-- **Multi-Domain Feature Extraction**: Extract 19 comprehensive features from 3D neuron morphologies, 2D astrocyte networks, and urban road networks
+- **Feature Extraction**: Extract 19 comprehensive features from 3D neuron morphologies, 2D astrocyte networks, and urban road networks
 - **Statistical Comparison**: Perform group-level statistical analysis across different network categories
 - **Clustering Analysis**: Compare networks using both feature-based methods and Gromov-Wasserstein Distance (G-W) with t-SNE visualization
 - **Classification**: Distinguish network types using Random Forest classifiers
