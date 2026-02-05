@@ -1,12 +1,8 @@
-import numpy as np
-import pandas as pd
-from skimage import draw
-import porespy as ps
-from scipy.spatial import ConvexHull
-import ot
-
+# Read the SWC file and remove axon (TypeID == 2) for Retina, optionally remove soma (TypeID == 1)
 def read_swc(file_path, remove_axon=False, remove_soma=False):
-    """Read an SWC file and return a DataFrame with neuron morphology data."""
+    """Read an SWC file and return a DataFrame with neuron morphology data.
+    If remove_axon is True, exclude axon (TypeID == 2).
+    If remove_soma is True, exclude soma (TypeID == 1) and adjust parents."""
     data = []
     with open(file_path, 'r') as f:
         for line in f:
@@ -22,12 +18,13 @@ def read_swc(file_path, remove_axon=False, remove_soma=False):
         df = df[df['TypeID'] != 2].reset_index(drop=True)
     if remove_soma:
         df = df[df['TypeID'] != 1].reset_index(drop=True)
+    # Adjust parents: if parent not in current df and != -1, set to -1
     valid_parents = set(df['SampleID'])
     df.loc[~df['parent'].isin(valid_parents) & (df['parent'] != -1), 'parent'] = -1
     return df
 
+# Helper function to add a ball to the 3D volume
 def add_ball(im, cy, cx, cz, radius):
-    """Add a 3D ball to a volume at given coordinates with specified radius."""
     if radius <= 0:
         return
     r = int(np.ceil(radius))
@@ -44,8 +41,9 @@ def add_ball(im, cy, cx, cz, radius):
     mask = (yy - cy)**2 + (xx - cx)**2 + (zz - cz)**2 <= radius**2
     im[yy[mask], xx[mask], zz[mask]] = True
 
+# Create a 3D binary volume from the SWC data
 def swc_to_binary_volume(swc_data, volume_size=700, radius_scale=2.0, padding_factor=1.1):
-    """Convert SWC data to a 3D binary volume."""
+    """Convert SWC data to a 3D binary volume : voxel_size = max_extent / volume_size, dimensions proportional to lengths."""
     x_min, x_max = swc_data['x'].min(), swc_data['x'].max()
     y_min, y_max = swc_data['y'].min(), swc_data['y'].max()
     z_min, z_max = swc_data['z'].min(), swc_data['z'].max()
@@ -60,6 +58,7 @@ def swc_to_binary_volume(swc_data, volume_size=700, radius_scale=2.0, padding_fa
     nx = int(np.ceil(extent_x / voxel_size))
     ny = int(np.ceil(extent_y / voxel_size))
     nz = int(np.ceil(extent_z / voxel_size))
+    # Cell-centered mapping: map [start, start+extent) -> indices [0..N-1] using floor
     x_center = (x_min + x_max) / 2
     y_center = (y_min + y_max) / 2
     z_center = (z_min + z_max) / 2
@@ -71,13 +70,13 @@ def swc_to_binary_volume(swc_data, volume_size=700, radius_scale=2.0, padding_fa
         return max(0, min(idx, size - 1))
     im = np.zeros((ny, nx, nz), dtype=bool)
     for _, row in swc_data.iterrows():
-        if row['TypeID'] == 1:
+        if row['TypeID'] == 1: # Soma (skipped if removed, but check anyway)
             cx = scale_coord(row['x'], start_x, nx)
             cy = scale_coord(row['y'], start_y, ny)
             cz = scale_coord(row['z'], start_z, nz)
             radius = max(1, row['radius'] / voxel_size * radius_scale)
             add_ball(im, cy, cx, cz, radius)
-        elif row['parent'] != -1:
+        elif row['parent'] != -1: # Neurites
             parent_row = swc_data[swc_data['SampleID'] == row['parent']]
             if not parent_row.empty:
                 cx1 = scale_coord(row['x'], start_x, nx)
@@ -88,13 +87,14 @@ def swc_to_binary_volume(swc_data, volume_size=700, radius_scale=2.0, padding_fa
                 cz2 = scale_coord(parent_row['z'].iloc[0], start_z, nz)
                 avg_radius = (row['radius'] + parent_row['radius'].iloc[0]) / 2
                 radius = max(1, avg_radius / voxel_size * radius_scale)
+                # Draw line in 3D
                 yy, xx, zz = draw.line_nd((cy1, cx1, cz1), (cy2, cx2, cz2))
                 for y, x, z in zip(yy, xx, zz):
                     add_ball(im, y, x, z, radius)
     return im
 
+# Function to compute fractal dimension using box-counting
 def compute_fractal_dimension(swc_file, folder):
-    """Compute fractal dimension for neuron SWC data using 3D box-counting."""
     try:
         remove_axon = (folder == 'Retina')
         swc_data = read_swc(swc_file, remove_axon=remove_axon, remove_soma=True)
@@ -112,29 +112,48 @@ def compute_fractal_dimension(swc_file, folder):
         print(f"Error computing FD for {swc_file}: {e}")
         return 0.0
 
+# Function to compute OT distance
 def compute_ot_distance_1d(data1, data2):
-    """Compute 1D optimal transport distance between two distributions."""
     n_bins = max(len(data1), len(data2))
     bins = np.linspace(min(min(data1), min(data2)), max(max(data1), max(data2)), n_bins)
     hist1, _ = np.histogram(data1, bins=bins, density=True)
     hist2, _ = np.histogram(data2, bins=bins, density=True)
     hist1 = hist1 / np.sum(hist1)
     hist2 = hist2 / np.sum(hist2)
-    bin_centers = (bins[:-1] + bins[1:]) / 2
-    M = ot.dist(bin_centers.reshape(-1, 1), bin_centers.reshape(-1, 1), metric='euclidean')
+    biN_alphaenters = (bins[:-1] + bins[1:]) / 2
+    M = ot.dist(biN_alphaenters.reshape(-1, 1), biN_alphaenters.reshape(-1, 1), metric='euclidean')
     return ot.emd2(hist1, hist2, M)
-
+    
+# Function to get upper triangular matrix
 def upper_triangular(df):
-    """Extract upper triangular part of a DataFrame."""
     mask = np.triu(np.ones(df.shape), k=1).astype(bool)
     df_upper = df.where(mask)
     return df_upper
-
+    
 def average_bending_energy_curve(c, closed=False, eps=1e-12):
     """
     Compute the line integral of the squared curvature of a polyline:
         ∫ κ(s)^2 ds / len(c)
     using a discrete arclength-based scheme on edges/tangents.
+    Parameters
+    ----------
+    c : (N, d) array_like
+        Vertices of the curve (d=2 or d=3).
+    closed : bool, default True
+        If True, treat the curve as closed (cyclic indices).
+        If False, treat as open and use only interior vertices.
+    eps : float, default 1e-12
+        Small clamp to avoid division by zero for tiny edges.
+    Returns
+    -------
+    float
+        Discrete approximation of ∫ κ^2 ds.
+    Notes
+    -----
+    Let e_i = c_{i+1} - c_i, ℓ_i = ||e_i||, and t_{i+1/2} = e_i / ℓ_i.
+    For a closed curve, the per-vertex contribution at vertex i is:
+        ||t_{i+1/2} - t_{i-1/2}||^2 / ((ℓ_i + ℓ_{i-1})/2).
+    For an open curve, the sum is taken over interior vertices only.
     """
     c = np.asarray(c, dtype=np.float64)
     if c.ndim != 2 or c.shape[1] < 2:
@@ -143,24 +162,31 @@ def average_bending_energy_curve(c, closed=False, eps=1e-12):
     if N < 3:
         raise ValueError("Need at least 3 points to estimate curvature.")
     if closed:
-        e = np.roll(c, -1, axis=0) - c
+        # Edges, lengths, and unit tangents on edges
+        e = np.roll(c, -1, axis=0) - c # (N, d), edges i -> i+1
         ℓ = np.linalg.norm(e, axis=1)
         length = np.sum(ℓ)
         ℓ = np.maximum(ℓ, eps)
-        t = e / ℓ[:, None]
-        Δt = t - np.roll(t, 1, axis=0)
-        avg_ℓ = 0.5 * (ℓ + np.roll(ℓ, 1))
+        t = e / ℓ[:, None] # unit tangents on edges
+        # Δt at vertices (i): t_{i+1/2} - t_{i-1/2}
+        Δt = t - np.roll(t, 1, axis=0) # (N, d)
+        # Dual (Voronoi) cell length around vertex i
+       
+        avg_ℓ = 0.5 * (ℓ + np.roll(ℓ, 1)) # (N,)
         avg_ℓ = np.maximum(avg_ℓ, eps)
-        energy = np.sum(np.einsum('ij,ij->i', Δt, Δt) / avg_ℓ) / length
+        # Sum of ||Δt||^2 / avg_ℓ
+        energy = np.sum(np.einsum('ij,ij->i', Δt, Δt) / avg_ℓ)/length
         return float(energy)
     else:
-        e = c[1:] - c[:-1]
+        # Open curve: edges on [0..N-2]
+        e = c[1:] - c[:-1] # (N-1, d)
         ℓ = np.linalg.norm(e, axis=1)
         length = np.sum(ℓ)
         ℓ = np.maximum(ℓ, eps)
-        t = e / ℓ[:, None]
-        Δt = t[1:] - t[:-1]
-        avg_ℓ = 0.5 * (ℓ[1:] + ℓ[:-1])
+        t = e / ℓ[:, None] # (N-1, d)
+        # Interior vertices correspond to differences of edge tangents
+        Δt = t[1:] - t[:-1] # (N-2, d)
+        avg_ℓ = 0.5 * (ℓ[1:] + ℓ[:-1]) # (N-2,)
         avg_ℓ = np.maximum(avg_ℓ, eps)
-        energy = np.sum(np.einsum('ij,ij->i', Δt, Δt) / avg_ℓ) / length
+        energy = np.sum(np.einsum('ij,ij->i', Δt, Δt) / avg_ℓ)/length
         return float(energy)
