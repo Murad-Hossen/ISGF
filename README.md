@@ -1,11 +1,11 @@
 ## Feature-based statistical analysis of shape graph data
-<img width="1227" height="311" alt="pipeline" src="https://github.com/user-attachments/assets/50e862db-8db4-4c4a-920b-1cd956c6192f" />
+<img width="1240" height="308" alt="pipeline" src="https://github.com/user-attachments/assets/d97cb72f-5c08-4322-bc84-af637c93e2cb" />
 
-A comprehensive framework for extracting, analyzing, and comparing structural features between biological neural networks (neurons and astrocytes) and urban road networks using graph-theoretic and geometric approaches.
+
 
 ## Overview
 
-ISGA -investigates the structural similarities between biological neural networks and urban road networks by computing a rich set of topological, geometric, and directional features. This project demonstrates that despite operating at vastly different scales and contexts, these networks share remarkable structural commonalities that can be quantified and analyzed using machine learning techniques.
+This work introduces and evaluates a computational pipeline for the statistical analysis of shape graph datasets, namely geometric networks embedded in 2D or 3D spaces. Our proposed approach relies on the extraction of a specifically curated and explicit set of topological, geometric and directional features, designed to satisfy key invariance properties. We leverage the resulting feature representation for tasks such as group comparison, clustering and classification on cohorts of shape graphs. The effectiveness of this representation is evaluated on several real-world datasets including urban road/street networks, neuronal traces and astrocyte imaging. These results are benchmarked against several alternative methods, both feature-based and not.
 
 
 ## Citation
@@ -24,10 +24,10 @@ https://github.com/Murad-Hossen/ISGF.git
 
 ### Key Capabilities
 
-- **Feature Extraction**: Extract 19 comprehensive features from 3D neuron morphologies, 2D astrocyte networks, and urban road networks
-- **Statistical Comparison**: Perform group-level statistical analysis across different network categories
-- **Clustering Analysis**: Compare networks using both feature-based methods and Gromov-Wasserstein Distance (G-W) with t-SNE visualization
-- **Classification**: Distinguish network types using Random Forest classifiers
+- **Feature Extraction**: Extract 19 comprehensive features from 3D neuron morphologies, 2D astrocyte morphology, and urban road networks
+- **Statistical Comparison**: Perform group-level statistical analysis across different datasets.
+- **Clustering Analysis**: Compare networks using both feature-based methods and Gromov-Wasserstein Distance (G-W) with t-SNE visualization.
+- **Classification**: Distinguish network types using Random Forest classifiers.
 
 
 
