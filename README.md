@@ -1,4 +1,4 @@
-## Feature-based statistical analysis of shape graph data
+## Feature-based morphological analysis of shape graph data
 <img width="1240" height="308" alt="pipeline" src="https://github.com/user-attachments/assets/d97cb72f-5c08-4322-bc84-af637c93e2cb" />
 
 
@@ -13,8 +13,12 @@ This work introduces and evaluates a computational pipeline for the statistical 
 If you use this code or methodology in your research, please cite:
 
 ```bibtex
-
-
+@article{hossen2026feature,
+  title={Feature-based morphological analysis of shape graph data},
+  author={Hossen, Murad and Labate, Demetrio and Charon, Nicolas},
+  journal={arXiv preprint arXiv:2602.16120},
+  year={2026}
+}
 ```
 
 Source code link:
@@ -27,7 +31,7 @@ https://github.com/Murad-Hossen/ISGF.git
 - **Feature Extraction**: Extract 19 comprehensive features from 3D neuron morphologies, 2D astrocyte morphology, and urban road networks
 - **Statistical Comparison**: Perform group-level statistical analysis across different datasets.
 - **Clustering Analysis**: Compare networks using both feature-based methods and Gromov-Wasserstein Distance (G-W) with t-SNE visualization.
-- **Classification**: Distinguish network types using Random Forest classifiers.
+- **Classification**: Perform shape graph classification using Random Forest classifiers.
 
 
 
